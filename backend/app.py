@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from .models import QueryRequest, QueryResponse
 from .flow_nodes import run_text_to_sql
@@ -6,8 +7,17 @@ from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS
 
 app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
 
+# Enable CORS so the browser can perform preflight OPTIONS and actual requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Consider restricting to known origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/health")
+
+@app.api_route("/health", methods=["GET", "OPTIONS"])
 async def health():
     return {"status": "ok"}
 
