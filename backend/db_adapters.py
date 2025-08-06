@@ -33,15 +33,24 @@ def normalize_to_url(db_path_or_url: str) -> str:
     Normalize a legacy filesystem path into a URL.
     If it already looks like a URL (has ://), return as-is.
     Otherwise treat it as a SQLite path.
+
+    Windows: prefer sqlite://C:/path form (no extra leading slash).
+    POSIX:   use sqlite:////abs/path form.
     """
     # Already a URL?
     if "://" in db_path_or_url:
         return db_path_or_url
     # Treat as filesystem path; resolve relative paths against server CWD
     p = Path(db_path_or_url).expanduser().resolve()
-    # Convert to POSIX-style path string (forward slashes)
+    # Windows: emit sqlite://C:/path form (no extra leading slash)
+    if os.name == "nt":
+        drive = p.drive  # like 'C:'
+        if drive:
+            # Build Windows URI: sqlite://C:/path/to/db
+            tail = p.as_posix()[len(drive):].lstrip("/")  # strip 'C:' from start, then any '/'
+            return f"sqlite://{drive}/{tail}"
+    # POSIX or no drive letter: sqlite:////abs/path
     posix = p.as_posix()
-    # Build absolute sqlite URL: sqlite:////abs/path
     return f"sqlite:////{posix}"
 
 
@@ -62,19 +71,30 @@ class SQLiteAdapter:
 
     def _connect(self, url: str) -> sqlite3.Connection:
         parts = urllib.parse.urlparse(url)
-        if parts.scheme == "file":
+        scheme = parts.scheme
+        db_file = ""
+
+        if scheme == "file":
             # file:///abs/path or file://localhost/abs/path
-            netloc = parts.netloc
-            path = parts.path or ""
-            db_file = f"{netloc}{path}" if netloc else path
+            db_file = (parts.netloc + parts.path) if parts.netloc else (parts.path or "")
         else:
-            # sqlite scheme
-            db_file = parts.path or ""
-            if parts.netloc:
+            # sqlite scheme; accept both Windows and POSIX forms
+            # Windows URI form: sqlite://C:/path/file.db  => netloc='C:', path='/path/file.db'
+            # POSIX absolute:   sqlite:////abs/path.db    => netloc='',  path='/abs/path.db'
+            # POSIX relative:   sqlite:///rel/path.db     => netloc='',  path='/rel/path.db'
+            if os.name == "nt" and parts.netloc and parts.path:
+                # Windows drive in netloc
                 db_file = f"{parts.netloc}{parts.path}"
-        # Windows drive letter fix: '/C:/x' -> 'C:/x'
-        if len(db_file) >= 3 and db_file[0] == "/" and db_file[2] == ":":
+            else:
+                db_file = parts.path or ""
+                if parts.netloc and not db_file:
+                    db_file = parts.netloc
+
+        # Normalize:
+        # - '/C:/x' -> 'C:/x' (Windows)
+        if os.name == "nt" and len(db_file) >= 3 and db_file[0] == "/" and db_file[2] == ":":
             db_file = db_file[1:]
+
         db_file = os.path.normpath(db_file)
         return sqlite3.connect(db_file)
 
