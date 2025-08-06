@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .models import QueryRequest, QueryResponse
 from .flow_nodes import run_text_to_sql
-from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS
+from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS, OPENROUTER_API_KEY, OPENROUTER_MODEL
 
 app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
 
@@ -15,6 +15,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def validate_llm_env():
+    # Fail fast with a clear message if API key is missing
+    if not OPENROUTER_API_KEY:
+        # Raise RuntimeError so uvicorn logs a clear startup failure
+        raise RuntimeError(
+            "OPENROUTER_API_KEY is not set. Export it to enable LLM completions via OpenRouter."
+        )
+    # Optional: log selected model to help debugging misconfigurations
+    # FastAPI's logger is not configured here; simple print is acceptable for dev
+    print(f"[startup] OpenRouter model: {OPENROUTER_MODEL}")
 
 
 @app.api_route("/health", methods=["GET", "OPTIONS"])
