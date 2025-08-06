@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 pydantic>=2
+httpx
 # sqlite3 is part of Python stdlib. If your environment lacks sqlite, uncomment the next line:
 # sqlite3-binary
 # LLM client placeholder. Replace with your chosen provider (e.g., openai).
