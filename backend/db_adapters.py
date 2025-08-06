@@ -39,8 +39,10 @@ def normalize_to_url(db_path_or_url: str) -> str:
         return db_path_or_url
     # Treat as filesystem path; resolve relative paths against server CWD
     p = Path(db_path_or_url).expanduser().resolve()
+    # Convert to POSIX-style path string (forward slashes)
+    posix = p.as_posix().lstrip("/")
     # Build absolute sqlite URL: sqlite:////abs/path
-    return f"sqlite:////{str(p).replace('\\', '/').lstrip('/')}"
+    return f"sqlite:////{posix}"
 
 
 def get_adapter_for(url: str) -> DBAdapter:
