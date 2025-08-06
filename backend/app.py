@@ -34,6 +34,12 @@ async def validate_llm_env():
 async def health():
     try:
         url = normalize_to_url(DB_PATH)
+        # Force sqlite scheme to use double-slash form (sqlite://...), never sqlite:////...
+        if isinstance(url, str) and url.startswith("sqlite:"):
+            # Strip any number of slashes after 'sqlite:'
+            rest = url[len("sqlite:"):]
+            rest_no_slashes = rest.lstrip("/")
+            url = f"sqlite://{rest_no_slashes}"
     except Exception:
         url = None
     return {"status": "ok", "db_url": url}
@@ -46,6 +52,11 @@ async def schema(db_path: str | None = None, db_url: str | None = None):
         url = normalize_to_url(raw)
         adapter = get_adapter_for(url)
         schema_text = adapter.get_schema(url)
+        # Force sqlite scheme to use double-slash form in responses
+        if isinstance(url, str) and url.startswith("sqlite:"):
+            rest = url[len("sqlite:"):]
+            rest_no_slashes = rest.lstrip("/")
+            url = f"sqlite://{rest_no_slashes}"
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return {
