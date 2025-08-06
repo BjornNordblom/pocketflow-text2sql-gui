@@ -21,6 +21,8 @@ Icon?
 .idea/
 *.iml
 
+*cache.db*
+
 # Python - bytecode / cache
 __pycache__/
 *.py[cod]
