@@ -184,19 +184,13 @@ def run_text_to_sql(
     flow = build_text_to_sql_flow()
     flow.run(shared)
 
-    if "final_result" in shared:
-        return {
-            "ok": True,
-            "data": shared.get("final_result"),
-            "sql": shared.get("generated_sql"),
-            "attempts": shared.get("debug_attempts", 0),
-            "schema": shared.get("schema") if include_schema else None,
-        }
-    else:
-        return {
-            "ok": False,
-            "err": shared.get("final_error") or shared.get("err"),
-            "sql": shared.get("generated_sql"),
-            "attempts": shared.get("debug_attempts", 0),
-            "schema": shared.get("schema") if include_schema else None,
-        }
+    result_ok = "final_result" in shared
+    attempts = shared.get("debug_attempts", 0)
+    return {
+        "ok": result_ok,
+        "data": shared.get("final_result") if result_ok else None,
+        "err": None if result_ok else (shared.get("final_error") or shared.get("err")),
+        "sql": shared.get("generated_sql"),
+        "attempts": attempts,
+        "schema": shared.get("schema") if include_schema else None,
+    }

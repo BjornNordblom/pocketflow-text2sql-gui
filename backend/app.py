@@ -31,7 +31,8 @@ async def query(req: QueryRequest):
     if res["ok"]:
         return QueryResponse(
             ok=True,
-            result=res["data"],
+            result=res.get("data"),
+            error=None,
             generated_sql=res.get("sql"),
             attempts=res.get("attempts"),
             schema=res.get("schema"),
@@ -39,6 +40,7 @@ async def query(req: QueryRequest):
     else:
         return QueryResponse(
             ok=False,
+            result=None,
             error=res.get("err"),
             generated_sql=res.get("sql"),
             attempts=res.get("attempts"),
