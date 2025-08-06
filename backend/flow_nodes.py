@@ -6,6 +6,16 @@ from typing import Any, Dict, Optional
 from .deps import call_llm
 
 
+def get_sqlite_schema(db_path: str) -> str:
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT sql FROM sqlite_master WHERE type='table';")
+    rows = cur.fetchall()
+    conn.close()
+    schema = "\n".join(row[0] for row in rows if row and row[0])
+    return schema
+
+
 class Node:
     """
     Minimal Node base compatible with the PocketFlow-style prep/exec/post lifecycle.

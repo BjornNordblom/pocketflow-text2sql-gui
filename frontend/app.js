@@ -8,6 +8,7 @@
   const $includeSchema = qs("#includeSchema");
   const $btnHealth = qs("#btnHealth");
   const $btnRun = qs("#btnRun");
+  const $btnSchema = qs("#btnSchema");
   const $resp = qs("#response");
 
   function safeUrl(base, path) {
@@ -34,6 +35,7 @@
   function setBusy(busy) {
     $btnRun.disabled = busy;
     $btnHealth.disabled = busy;
+    if ($btnSchema) $btnSchema.disabled = busy;
   }
 
   function show(obj) {
@@ -54,6 +56,21 @@
       show({ endpoint: "/health", ...res });
     } catch (e) {
       $health.textContent = "Network error";
+      show({ error: String(e) });
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  $btnSchema.addEventListener("click", async () => {
+    setBusy(true);
+    try {
+      const base = $apiBase.value;
+      const path = $db.value ? `/schema?db_path=${encodeURIComponent($db.value)}` : "/schema";
+      const url = safeUrl(base, path);
+      const res = await jsonFetch(url);
+      show({ endpoint: "/schema", ...res });
+    } catch (e) {
       show({ error: String(e) });
     } finally {
       setBusy(false);

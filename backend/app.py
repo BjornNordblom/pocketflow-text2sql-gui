@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import QueryRequest, QueryResponse
-from .flow_nodes import run_text_to_sql
+from .flow_nodes import run_text_to_sql, get_sqlite_schema
 from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS, OPENROUTER_API_KEY, OPENROUTER_MODEL
 
 app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
@@ -32,6 +32,21 @@ async def validate_llm_env():
 @app.api_route("/health", methods=["GET", "OPTIONS"])
 async def health():
     return {"status": "ok"}
+
+
+@app.api_route("/schema", methods=["GET", "OPTIONS"])
+async def schema(db_path: str | None = None):
+    path = db_path or DB_PATH
+    try:
+        schema_text = get_sqlite_schema(path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "ok": True,
+        "db_path": path,
+        "schema": schema_text,
+        "has_tables": bool(schema_text.strip()),
+    }
 
 
 @app.post("/query", response_model=QueryResponse)
