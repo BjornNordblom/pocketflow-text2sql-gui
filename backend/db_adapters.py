@@ -5,6 +5,7 @@ from typing import Protocol, Dict, List, Tuple
 import urllib.parse
 import sqlite3
 import os
+from pathlib import Path
 
 
 class DBAdapter(Protocol):
@@ -33,16 +34,13 @@ def normalize_to_url(db_path_or_url: str) -> str:
     If it already looks like a URL (has ://), return as-is.
     Otherwise treat it as a SQLite path.
     """
+    # Already a URL?
     if "://" in db_path_or_url:
         return db_path_or_url
-    # Normalize Windows-style backslashes
-    p = db_path_or_url.replace("\\", "/")
-    if p.startswith("/"):
-        # Absolute path requires four slashes after scheme
-        return f"sqlite:////{p.lstrip('/')}"
-    else:
-        # Relative path
-        return f"sqlite:///{p}"
+    # Treat as filesystem path; resolve relative paths against server CWD
+    p = Path(db_path_or_url).expanduser().resolve()
+    # Build absolute sqlite URL: sqlite:////abs/path
+    return f"sqlite:////{str(p).replace('\\', '/').lstrip('/')}"
 
 
 def get_adapter_for(url: str) -> DBAdapter:
@@ -62,16 +60,17 @@ class SQLiteAdapter:
 
     def _connect(self, url: str) -> sqlite3.Connection:
         parts = urllib.parse.urlparse(url)
-        # Build filesystem path from URL parts
-        # Typical forms:
-        # - sqlite:///relative.db      -> path '/relative.db' (relative)
-        # - sqlite:////abs/path.db     -> path '/abs/path.db' (absolute)
-        # - sqlite:///C:/path.db       -> path '/C:/path.db' (Windows drive)
-        db_file = parts.path or ""
-        if parts.netloc:
-            # Combine netloc for forms like file://host/path or UNC-like targets
-            db_file = f"{parts.netloc}{parts.path}"
-        # On Windows: strip leading slash before drive letter, e.g. '/C:/x' -> 'C:/x'
+        if parts.scheme == "file":
+            # file:///abs/path or file://localhost/abs/path
+            netloc = parts.netloc
+            path = parts.path or ""
+            db_file = f"{netloc}{path}" if netloc else path
+        else:
+            # sqlite scheme
+            db_file = parts.path or ""
+            if parts.netloc:
+                db_file = f"{parts.netloc}{parts.path}"
+        # Windows drive letter fix: '/C:/x' -> 'C:/x'
         if len(db_file) >= 3 and db_file[0] == "/" and db_file[2] == ":":
             db_file = db_file[1:]
         db_file = os.path.normpath(db_file)
