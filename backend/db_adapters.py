@@ -40,7 +40,7 @@ def normalize_to_url(db_path_or_url: str) -> str:
     # Treat as filesystem path; resolve relative paths against server CWD
     p = Path(db_path_or_url).expanduser().resolve()
     # Convert to POSIX-style path string (forward slashes)
-    posix = p.as_posix().lstrip("/")
+    posix = p.as_posix()
     # Build absolute sqlite URL: sqlite:////abs/path
     return f"sqlite:////{posix}"
 
