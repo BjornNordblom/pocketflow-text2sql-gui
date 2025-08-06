@@ -32,7 +32,11 @@ async def validate_llm_env():
 
 @app.api_route("/health", methods=["GET", "OPTIONS"])
 async def health():
-    return {"status": "ok"}
+    try:
+        url = normalize_to_url(DB_PATH)
+    except Exception:
+        url = None
+    return {"status": "ok", "db_url": url}
 
 
 @app.api_route("/schema", methods=["GET", "OPTIONS"])
@@ -49,6 +53,7 @@ async def schema(db_path: str | None = None, db_url: str | None = None):
         "db_url": url,
         "schema": schema_text,
         "has_tables": bool(schema_text.strip()),
+        "db_path": url,  # deprecated alias
     }
 
 
@@ -77,6 +82,7 @@ async def query(req: QueryRequest):
             generated_sql=res.get("sql"),
             attempts=res.get("attempts"),
             schema=res.get("schema"),
+            db_url=db_url,
         )
     else:
         return QueryResponse(
@@ -86,4 +92,5 @@ async def query(req: QueryRequest):
             generated_sql=res.get("sql"),
             attempts=res.get("attempts"),
             schema=res.get("schema"),
+            db_url=db_url,
         )

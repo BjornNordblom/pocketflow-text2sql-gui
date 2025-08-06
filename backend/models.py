@@ -19,3 +19,4 @@ class QueryResponse(BaseModel):
     generated_sql: Optional[str] = None
     attempts: Optional[int] = None
     schema: Optional[str] = None
+    db_url: Optional[str] = None
