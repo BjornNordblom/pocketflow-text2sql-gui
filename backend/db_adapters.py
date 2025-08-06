@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol, Dict, List, Tuple
 import urllib.parse
 import sqlite3
+import os
 
 
 class DBAdapter(Protocol):
@@ -34,14 +35,14 @@ def normalize_to_url(db_path_or_url: str) -> str:
     """
     if "://" in db_path_or_url:
         return db_path_or_url
-    # Treat as sqlite file path
-    path = db_path_or_url
-    # If absolute path: sqlite:///absolute/path -> urlparse path is '/absolute/path'
-    # If relative path: sqlite:///<relative> (note: urlparse path begins with '/')
-    if path.startswith("/"):
-        return f"sqlite://{path}"
+    # Normalize Windows-style backslashes
+    p = db_path_or_url.replace("\\", "/")
+    if p.startswith("/"):
+        # Absolute path requires four slashes after scheme
+        return f"sqlite:////{p.lstrip('/')}"
     else:
-        return f"sqlite:///{path}"
+        # Relative path
+        return f"sqlite:///{p}"
 
 
 def get_adapter_for(url: str) -> DBAdapter:
@@ -61,17 +62,19 @@ class SQLiteAdapter:
 
     def _connect(self, url: str) -> sqlite3.Connection:
         parts = urllib.parse.urlparse(url)
-        # For sqlite URLs:
-        # - sqlite:///relative.db -> path '/relative.db' (relative to CWD without leading slash in os path)
-        # - sqlite:///C:/path.db on Windows -> path '/C:/path.db'
-        # We will strip a single leading slash if there's no netloc.
-        db_file = parts.path
-        if parts.netloc and parts.netloc != "":  # e.g., file://localhost/...
-            # For file:// URIs include netloc as part of path root
-            db_file = f"//{parts.netloc}{parts.path}"
-        # Normalize Windows-style leading slash before drive letter
+        # Build filesystem path from URL parts
+        # Typical forms:
+        # - sqlite:///relative.db      -> path '/relative.db' (relative)
+        # - sqlite:////abs/path.db     -> path '/abs/path.db' (absolute)
+        # - sqlite:///C:/path.db       -> path '/C:/path.db' (Windows drive)
+        db_file = parts.path or ""
+        if parts.netloc:
+            # Combine netloc for forms like file://host/path or UNC-like targets
+            db_file = f"{parts.netloc}{parts.path}"
+        # On Windows: strip leading slash before drive letter, e.g. '/C:/x' -> 'C:/x'
         if len(db_file) >= 3 and db_file[0] == "/" and db_file[2] == ":":
             db_file = db_file[1:]
+        db_file = os.path.normpath(db_file)
         return sqlite3.connect(db_file)
 
     def get_schema(self, url: str) -> str:
