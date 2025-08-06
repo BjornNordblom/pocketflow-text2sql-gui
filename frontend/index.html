@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Text-to-SQL Web Client</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Text-to-SQL</h1>
+
+    <section class="panel">
+      <label for="apiBase">API Base URL</label>
+      <input id="apiBase" type="text" value="http://localhost:8000" />
+      <button id="btnHealth" type="button">Check Health</button>
+      <span id="healthStatus" class="muted"></span>
+    </section>
+
+    <section class="panel">
+      <label for="dbPath">DB Path (optional)</label>
+      <input id="dbPath" type="text" placeholder="example.db (server default)" />
+    </section>
+
+    <section class="panel">
+      <label for="query">Natural Language Query</label>
+      <textarea id="query" rows="3" placeholder="e.g., Show total sales for June 2025"></textarea>
+    </section>
+
+    <section class="panel">
+      <label for="maxAttempts">Max Debug Attempts</label>
+      <input id="maxAttempts" type="number" min="0" max="10" value="3" />
+      <label class="inline">
+        <input id="includeSchema" type="checkbox" />
+        Include schema in response
+      </label>
+    </section>
+
+    <section class="panel">
+      <button id="btnRun" type="button">Run Query</button>
+    </section>
+
+    <section class="panel">
+      <h2>Response</h2>
+      <pre id="response" class="code-block"></pre>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
