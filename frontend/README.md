@@ -1,16 +1,21 @@
 Text-to-SQL Minimal Web Client
 
 Usage
-1) Start backend:
-   uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
-2) Open frontend/index.html directly in your browser, or serve statically:
-   python -m http.server -d frontend 8080
-3) Enter the backend base URL (default http://localhost:8000), type a natural language query, and click Run Query.
+1) Start backend (cross-platform):
+   python tools/run_dev.py
+   Or on Unix:
+   ./backend/main.sh
+2) Open the client:
+   - Open frontend/index.html directly in your browser, or
+   - Serve statically: python -m http.server -d frontend 8080
+3) Use the UI:
+   - API Base URL defaults to http://localhost:8000
+   - Enter Natural Language Query
+   - Optional: db_path, max_debug_attempts, include_schema
 
 Notes
-- No build tools, pure HTML/CSS/JS.
-- Supports overriding db_path, max_debug_attempts, include_schema flags.
-- Displays raw JSON response to keep UI minimal.
-- Health check button verifies connectivity.
-
-That’s it—no external dependencies or frameworks are introduced.
+- No build tools; pure HTML/CSS/JS.
+- Lint the whole project:
+   python tools/lint_all.py
+   python tools/lint_all.py --fix
+- Frontend lint requires Node.js (ESLint); backend lint uses Ruff.
