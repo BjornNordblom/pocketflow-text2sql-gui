@@ -1,1 +1,127 @@
-.aider*
+# OS / Editor
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+*.swp
+*.swo
+*.swn
+*.swm
+*.orig
+*.rej
+*.bak
+*.tmp
+*.temp
+*~
+.nvm/
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.iml
+
+# Python - bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python - virtual environments
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Python - packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Python - test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.pyright/
+.pyre/
+.cache/
+
+# Python - local data
+instance/
+db.sqlite3
+*.db
+*.sqlite
+*.sqlite3
+
+# Node / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Frontend - build artifacts (if added later)
+dist/
+build/
+.out/
+.next/
+.vercel/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+log.txt
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Tooling caches
+ruff_cache/
+.eslintcache
+.parcel-cache/
+.rollup.cache/
+webpack.stats.json
+
+# Misc local files
+*.local
+*.secret
+*.bak
+
+# Generated or runtime files
+*.pid
+*.pid.lock
+
+# macOS metadata
+.AppleDouble
+.LSOverride
+
+# Windows installer junk
+$RECYCLE.BIN/
+
+# Python compiled shared objects
+*.so
+
+# Jupyter / notebooks (if used later)
+.ipynb_checkpoints/
+
+# Coverage XML/LCOV
+coverage.xml
+lcov.info
+
+# FastAPI/uvicorn reload artifacts (safety)
+.reload/
