@@ -2,8 +2,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import QueryRequest, QueryResponse
-from .flow_nodes import run_text_to_sql, get_sqlite_schema
+from .flow_nodes import run_text_to_sql
 from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS, OPENROUTER_API_KEY, OPENROUTER_MODEL
+from .db_adapters import get_adapter_for, normalize_to_url
 
 app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
 
@@ -35,15 +36,17 @@ async def health():
 
 
 @app.api_route("/schema", methods=["GET", "OPTIONS"])
-async def schema(db_path: str | None = None):
-    path = db_path or DB_PATH
+async def schema(db_path: str | None = None, db_url: str | None = None):
+    raw = db_url or db_path or DB_PATH
     try:
-        schema_text = get_sqlite_schema(path)
+        url = normalize_to_url(raw)
+        adapter = get_adapter_for(url)
+        schema_text = adapter.get_schema(url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return {
         "ok": True,
-        "db_path": path,
+        "db_url": url,
         "schema": schema_text,
         "has_tables": bool(schema_text.strip()),
     }
@@ -51,13 +54,14 @@ async def schema(db_path: str | None = None):
 
 @app.post("/query", response_model=QueryResponse)
 async def query(req: QueryRequest):
-    db_path = req.db_path or DB_PATH
+    raw = (req.db_url or req.db_path or DB_PATH)
+    db_url = normalize_to_url(raw)
     max_attempts = req.max_debug_attempts if req.max_debug_attempts is not None else MAX_DEBUG_ATTEMPTS
     include_schema = bool(getattr(req, "include_schema", False))
     try:
         res = run_text_to_sql(
             req.natural_query,
-            db_path=db_path,
+            db_url=db_url,
             max_debug_attempts=max_attempts,
             include_schema=include_schema,
         )

@@ -1,19 +1,9 @@
 from __future__ import annotations
 
-import sqlite3
 from typing import Any, Dict, Optional
 
 from .deps import call_llm
-
-
-def get_sqlite_schema(db_path: str) -> str:
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute("SELECT sql FROM sqlite_master WHERE type='table';")
-    rows = cur.fetchall()
-    conn.close()
-    schema = "\n".join(row[0] for row in rows if row and row[0])
-    return schema
+from .db_adapters import get_adapter_for, normalize_to_url
 
 
 class Node:
@@ -65,16 +55,12 @@ class Flow:
 
 class GetSchema(Node):
     def prep(self, shared: Dict[str, Any]) -> str:
-        return shared["db_path"]
+        return shared["db_url"]
 
-    def exec(self, db_path: str) -> str:
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
-        cur.execute("SELECT sql FROM sqlite_master WHERE type='table';")
-        rows = cur.fetchall()
-        conn.close()
-        schema = "\n".join(row[0] for row in rows if row and row[0])
-        return schema
+    def exec(self, db_url_or_path: str) -> str:
+        url = normalize_to_url(db_url_or_path)
+        adapter = get_adapter_for(url)
+        return adapter.get_schema(url)
 
     def post(self, shared: Dict[str, Any], _: Any, schema: str) -> None:
         shared["schema"] = schema
@@ -98,23 +84,16 @@ class GenerateSQL(Node):
 
 class ExecuteSQL(Node):
     def prep(self, shared: Dict[str, Any]) -> tuple[str, str]:
-        return shared["db_path"], shared["generated_sql"]
+        return shared["db_url"], shared["generated_sql"]
 
     def exec(self, inputs: tuple[str, str]) -> Dict[str, Any]:
-        db_path, sql = inputs
+        db_url_or_path, sql = inputs
         try:
-            conn = sqlite3.connect(db_path)
-            cur = conn.cursor()
-            cur.execute(sql)
-            data = cur.fetchall()
-            conn.close()
+            url = normalize_to_url(db_url_or_path)
+            adapter = get_adapter_for(url)
+            data = adapter.execute(url, sql)
             return {"ok": True, "data": data}
-        except sqlite3.Error as e:
-            if "conn" in locals():
-                try:
-                    conn.close()
-                except Exception:
-                    pass
+        except Exception as e:
             return {"ok": False, "err": str(e)}
 
     def post(self, shared: Dict[str, Any], _: Any, res: Dict[str, Any]) -> Optional[str]:
@@ -181,12 +160,12 @@ def build_text_to_sql_flow() -> Flow:
 
 def run_text_to_sql(
     natural_query: str,
-    db_path: str,
+    db_url: str,
     max_debug_attempts: int,
     include_schema: bool = False,
 ) -> Dict[str, Any]:
     shared: Dict[str, Any] = {
-        "db_path": db_path,
+        "db_url": db_url,
         "natural_query": natural_query,
         "max_debug_attempts": max_debug_attempts,
     }

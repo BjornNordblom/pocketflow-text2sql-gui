@@ -9,6 +9,7 @@ class QueryRequest(BaseModel):
     max_debug_attempts: Optional[int] = Field(None, ge=0, le=10)
     db_path: Optional[str] = None
     include_schema: Optional[bool] = False
+    db_url: Optional[str] = None
 
 
 class QueryResponse(BaseModel):
