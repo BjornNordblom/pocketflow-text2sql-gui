@@ -5,7 +5,7 @@ def test_query_debug_exhausted(client, ecommerce_db_path, monkeypatch):
     def always_bad(_prompt: str) -> str:
         return "SELECT * FROM not_a_table;"
 
-    monkeypatch.setenv("DB_PATH", ecommerce_db_path)
+    monkeypatch.setenv("DB_PATH", "sqlite://./ecommerce.db")
     monkeypatch.setattr(deps, "call_llm", always_bad)
 
     payload = {

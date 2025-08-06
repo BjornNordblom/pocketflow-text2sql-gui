@@ -1,6 +1,6 @@
 def test_query_not_implemented(client, ecommerce_db_path, monkeypatch):
     # We do NOT patch deps.call_llm here to simulate default NotImplementedError
-    monkeypatch.setenv("DB_PATH", ecommerce_db_path)
+    monkeypatch.setenv("DB_PATH", "sqlite://./ecommerce.db")
 
     payload = {"natural_query": "anything"}
     res = client.post("/query", json=payload)

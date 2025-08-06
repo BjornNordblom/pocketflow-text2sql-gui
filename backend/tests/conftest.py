@@ -16,7 +16,8 @@ from backend import settings
 def client():
     return TestClient(app)
 
-# New fixture pointing to the repo-root ecommerce.db
+# New fixture returning the desired SQLite URL
 @pytest.fixture
 def ecommerce_db_path() -> str:
-    return str(REPO_ROOT / "ecommerce.db")
+    # Ensure tests use a URL, not a plain path
+    return "sqlite://./ecommerce.db"
