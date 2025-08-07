@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .models import QueryRequest, QueryResponse
 from .flow_nodes import run_text_to_sql
 from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS, OPENROUTER_API_KEY, OPENROUTER_MODEL
-from .db_adapters import get_adapter_for, normalize_to_url
+from .db_adapters import normalize_to_url
 
 app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
 

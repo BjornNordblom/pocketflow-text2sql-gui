@@ -1,7 +1,9 @@
-import sys
 import os
+import sys
+
+from populate_db import DB_FILE, populate_database
 from flow import create_text_to_sql_flow
-from populate_db import populate_database, DB_FILE
+
 
 def run_text_to_sql(natural_query, db_path=DB_FILE, max_debug_retries=3):
     if not os.path.exists(db_path) or os.path.getsize(db_path) == 0:
@@ -14,7 +16,7 @@ def run_text_to_sql(natural_query, db_path=DB_FILE, max_debug_retries=3):
         "max_debug_attempts": max_debug_retries,
         "debug_attempts": 0,
         "final_result": None,
-        "final_error": None
+        "final_error": None,
     }
 
     print(f"\n=== Starting Text-to-SQL Workflow ===")
@@ -24,21 +26,22 @@ def run_text_to_sql(natural_query, db_path=DB_FILE, max_debug_retries=3):
     print("=" * 45)
 
     flow = create_text_to_sql_flow()
-    flow.run(shared) # Let errors inside the loop be handled by the flow logic
+    flow.run(shared)  # Let errors inside the loop be handled by the flow logic
 
     # Check final state based on shared data
     if shared.get("final_error"):
-            print("\n=== Workflow Completed with Error ===")
-            print(f"Error: {shared['final_error']}")
+        print("\n=== Workflow Completed with Error ===")
+        print(f"Error: {shared['final_error']}")
     elif shared.get("final_result") is not None:
-            print("\n=== Workflow Completed Successfully ===")
-            # Result already printed by ExecuteSQL node
+        print("\n=== Workflow Completed Successfully ===")
+        # Result already printed by ExecuteSQL node
     else:
-            # Should not happen if flow logic is correct and covers all end states
-            print("\n=== Workflow Completed (Unknown State) ===")
+        # Should not happen if flow logic is correct and covers all end states
+        print("\n=== Workflow Completed (Unknown State) ===")
 
     print("=" * 36)
     return shared
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -46,4 +49,4 @@ if __name__ == "__main__":
     else:
         query = "total products per category"
 
-    run_text_to_sql(query) 
+    run_text_to_sql(query)

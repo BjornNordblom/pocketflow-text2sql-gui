@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Protocol, Dict, List, Tuple
-import urllib.parse
-import sqlite3
 import os
+import sqlite3
+import urllib.parse
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Protocol, Tuple
 
 
 class DBAdapter(Protocol):

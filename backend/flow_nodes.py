@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from .deps import call_llm
 from .db_adapters import get_adapter_for, normalize_to_url
+from .deps import call_llm
 
 
 class Node:

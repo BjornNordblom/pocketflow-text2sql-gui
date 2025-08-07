@@ -1,8 +1,11 @@
 import sqlite3
 import time
-import yaml # Import yaml here as nodes use it
+
+import yaml  # Import yaml here as nodes use it
+
 from pocketflow import Node
 from utils.call_llm import call_llm
+
 
 class GetSchema(Node):
     def prep(self, shared):
@@ -31,6 +34,7 @@ class GetSchema(Node):
         print(exec_res)
         print("\n=====================\n")
         # return "default"
+
 
 class GenerateSQL(Node):
     def prep(self, shared):
@@ -65,6 +69,7 @@ sql: |
         print("\n====================================\n")
         # return "default"
 
+
 class ExecuteSQL(Node):
     def prep(self, shared):
         return shared["db_path"], shared["generated_sql"]
@@ -91,11 +96,11 @@ class ExecuteSQL(Node):
             return (True, results, column_names)
         except sqlite3.Error as e:
             print(f"SQLite Error during execution: {e}")
-            if 'conn' in locals() and conn:
-                 try:
-                     conn.close()
-                 except Exception:
-                     pass
+            if "conn" in locals() and conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
             return (False, str(e), [])
 
     def post(self, shared, prep_res, exec_res):
@@ -107,18 +112,23 @@ class ExecuteSQL(Node):
             print("\n===== SQL EXECUTION SUCCESS =====\n")
             # (Same result printing logic as before)
             if isinstance(result_or_error, list):
-                 if column_names: print(" | ".join(column_names)); print("-" * (sum(len(str(c)) for c in column_names) + 3 * (len(column_names) -1)))
-                 if not result_or_error: print("(No results found)")
-                 else:
-                     for row in result_or_error: print(" | ".join(map(str, row)))
-            else: print(result_or_error)
+                if column_names:
+                    print(" | ".join(column_names))
+                    print("-" * (sum(len(str(c)) for c in column_names) + 3 * (len(column_names) - 1)))
+                if not result_or_error:
+                    print("(No results found)")
+                else:
+                    for row in result_or_error:
+                        print(" | ".join(map(str, row)))
+            else:
+                print(result_or_error)
             print("\n=================================\n")
             return
         else:
             # Execution failed (SQLite error caught in exec)
-            shared["execution_error"] = result_or_error # Store the error message
+            shared["execution_error"] = result_or_error  # Store the error message
             shared["debug_attempts"] = shared.get("debug_attempts", 0) + 1
-            max_attempts = shared.get("max_debug_attempts", 3) # Get max attempts from shared
+            max_attempts = shared.get("max_debug_attempts", 3)  # Get max attempts from shared
 
             print(f"\n===== SQL EXECUTION FAILED (Attempt {shared['debug_attempts']}) =====\n")
             print(f"Error: {shared['execution_error']}")
@@ -130,7 +140,8 @@ class ExecuteSQL(Node):
                 return
             else:
                 print("Attempting to debug the SQL...")
-                return "error_retry" # Signal to go to DebugSQL
+                return "error_retry"  # Signal to go to DebugSQL
+
 
 class DebugSQL(Node):
     def prep(self, shared):
@@ -138,7 +149,7 @@ class DebugSQL(Node):
             shared.get("natural_query"),
             shared.get("schema"),
             shared.get("generated_sql"),
-            shared.get("execution_error")
+            shared.get("execution_error"),
         )
 
     def exec(self, prep_res):
@@ -169,8 +180,8 @@ sql: |
 
     def post(self, shared, prep_res, exec_res):
         # exec_res is the corrected SQL string
-        shared["generated_sql"] = exec_res # Overwrite with the new attempt
-        shared.pop("execution_error", None) # Clear the previous error for the next ExecuteSQL attempt
+        shared["generated_sql"] = exec_res  # Overwrite with the new attempt
+        shared.pop("execution_error", None)  # Clear the previous error for the next ExecuteSQL attempt
 
         print(f"\n===== REVISED SQL (Attempt {shared.get('debug_attempts', 0) + 1}) =====\n")
         print(exec_res)
