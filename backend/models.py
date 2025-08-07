@@ -23,7 +23,6 @@ class QueryResponse(BaseModel):
     db_url: Optional[str] = None
 
     model_config = ConfigDict(
-        validate_by_name=True,   # replaces allow_population_by_field_name
-        ser_json_inf_nan=False,  # optional; keeps JSON strict
+        validate_by_name=True,   # allow population/validation by attribute name
         populate_by_name=True,   # allow population by attribute name as well
     )
