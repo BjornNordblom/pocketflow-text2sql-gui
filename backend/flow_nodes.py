@@ -78,7 +78,6 @@ class GenerateSQL(Node):
 
     def post(self, shared: Dict[str, Any], _: Any, sql: str) -> None:
         shared["generated_sql"] = sql
-        shared["debug_attempts"] = 0
         return None
 
 
