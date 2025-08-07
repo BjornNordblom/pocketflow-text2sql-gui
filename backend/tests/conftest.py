@@ -5,15 +5,14 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from backend.app import app  # keep all imports grouped at top
+from backend.app import app
 
-# Ensure the backend package is importable when running pytest from non-root
+# Ensure backend is importable when running tests from non-root
 try:
     REPO_ROOT = Path(__file__).resolve().parents[2]
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
 except Exception:
-    # Best-effort; tests will fail clearly if import paths are wrong
     pass
 
 

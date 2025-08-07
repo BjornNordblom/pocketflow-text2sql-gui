@@ -1,7 +1,7 @@
 import sqlite3
 import time
 
-import yaml  # Import yaml here as nodes use it
+import yaml
 
 from pocketflow import Node
 from utils.call_llm import call_llm
@@ -60,9 +60,8 @@ sql: |
         return sql_query
 
     def post(self, shared, prep_res, exec_res):
-        # exec_res is now the parsed SQL query string
+        # Reset debug attempts when generating new SQL
         shared["generated_sql"] = exec_res
-        # Reset debug attempts when *successfully* generating new SQL
         shared["debug_attempts"] = 0
         print(f"\n===== GENERATED SQL (Attempt {shared.get('debug_attempts', 0) + 1}) =====\n")
         print(exec_res)
@@ -110,7 +109,6 @@ class ExecuteSQL(Node):
             shared["final_result"] = result_or_error
             shared["result_columns"] = column_names
             print("\n===== SQL EXECUTION SUCCESS =====\n")
-            # (Same result printing logic as before)
             if isinstance(result_or_error, list):
                 if column_names:
                     print(" | ".join(column_names))
@@ -125,10 +123,9 @@ class ExecuteSQL(Node):
             print("\n=================================\n")
             return
         else:
-            # Execution failed (SQLite error caught in exec)
-            shared["execution_error"] = result_or_error  # Store the error message
+            shared["execution_error"] = result_or_error
             shared["debug_attempts"] = shared.get("debug_attempts", 0) + 1
-            max_attempts = shared.get("max_debug_attempts", 3)  # Get max attempts from shared
+            max_attempts = shared.get("max_debug_attempts", 3)
 
             print(f"\n===== SQL EXECUTION FAILED (Attempt {shared['debug_attempts']}) =====\n")
             print(f"Error: {shared['execution_error']}")
@@ -140,7 +137,7 @@ class ExecuteSQL(Node):
                 return
             else:
                 print("Attempting to debug the SQL...")
-                return "error_retry"  # Signal to go to DebugSQL
+                return "error_retry"
 
 
 class DebugSQL(Node):
@@ -179,9 +176,8 @@ sql: |
         return corrected_sql
 
     def post(self, shared, prep_res, exec_res):
-        # exec_res is the corrected SQL string
-        shared["generated_sql"] = exec_res  # Overwrite with the new attempt
-        shared.pop("execution_error", None)  # Clear the previous error for the next ExecuteSQL attempt
+        shared["generated_sql"] = exec_res
+        shared.pop("execution_error", None)
 
         print(f"\n===== REVISED SQL (Attempt {shared.get('debug_attempts', 0) + 1}) =====\n")
         print(exec_res)

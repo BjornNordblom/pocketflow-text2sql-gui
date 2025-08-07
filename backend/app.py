@@ -8,10 +8,10 @@ from .db_adapters import get_adapter_for, normalize_to_url
 
 app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
 
-# Enable CORS so the browser can perform preflight OPTIONS and actual requests
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Consider restricting to known origins in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -20,14 +20,13 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def validate_llm_env():
-    # Fail fast with a clear message if API key is missing
+    # Fail fast if API key is missing
     if not OPENROUTER_API_KEY:
         # Raise RuntimeError so uvicorn logs a clear startup failure
         raise RuntimeError(
             "OPENROUTER_API_KEY is not set. Export it to enable LLM completions via OpenRouter."
         )
-    # Optional: log selected model to help debugging misconfigurations
-    # FastAPI's logger is not configured here; simple print is acceptable for dev
+    # Log selected model
     print(f"[startup] OpenRouter model: {OPENROUTER_MODEL}")
 
 
@@ -35,9 +34,9 @@ async def validate_llm_env():
 async def health():
     try:
         url = normalize_to_url(DB_PATH)
-        # Force sqlite scheme to use double-slash form (sqlite://...), never sqlite:////...
+        # Use sqlite:// form (not sqlite:////...)
         if isinstance(url, str) and url.startswith("sqlite:"):
-            # Strip any number of slashes after 'sqlite:'
+            # Strip extra slashes
             rest = url[len("sqlite:"):]
             rest_no_slashes = rest.lstrip("/")
             url = f"sqlite://{rest_no_slashes}"
@@ -53,8 +52,9 @@ async def schema(db_path: str | None = None, db_url: str | None = None):
         url = normalize_to_url(raw)
         adapter = get_adapter_for(url)
         schema_text = adapter.get_schema(url)
-        # Force sqlite scheme to use double-slash form in responses
+        # Use sqlite:// form (not sqlite:////...)
         if isinstance(url, str) and url.startswith("sqlite:"):
+            # Strip extra slashes
             rest = url[len("sqlite:"):]
             rest_no_slashes = rest.lstrip("/")
             url = f"sqlite://{rest_no_slashes}"
@@ -65,7 +65,7 @@ async def schema(db_path: str | None = None, db_url: str | None = None):
         "db_url": url,
         "schema": schema_text,
         "has_tables": bool(schema_text.strip()),
-        "db_path": url,  # deprecated alias
+        "db_path": url,
     }
 
 
