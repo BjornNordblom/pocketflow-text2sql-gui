@@ -74,7 +74,11 @@ class GenerateSQL(Node):
     def exec(self, inputs: tuple[str, str]) -> str:
         nl_query, schema = inputs
         prompt = f"Given schema:\n{schema}\n\nGenerate SQLite query for: {nl_query}\nSQL:"
-        return call_llm(prompt).strip()
+        try:
+            return call_llm(prompt).strip()
+        except NotImplementedError:
+            # Propagate so FastAPI can return 501
+            raise
 
     def post(self, shared: Dict[str, Any], _: Any, sql: str) -> None:
         shared["generated_sql"] = sql
@@ -135,7 +139,11 @@ Error: {err}
 Provide the corrected SQLite query:
 SQL:
 """
-        return call_llm(prompt).strip()
+        try:
+            return call_llm(prompt).strip()
+        except NotImplementedError:
+            # Propagate so FastAPI can return 501
+            raise
 
     def post(self, shared: Dict[str, Any], _: Any, fixed_sql: str) -> None:
         shared["generated_sql"] = fixed_sql
