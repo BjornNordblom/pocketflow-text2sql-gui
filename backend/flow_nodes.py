@@ -93,6 +93,9 @@ class ExecuteSQL(Node):
             adapter = get_adapter_for(url)
             data = adapter.execute(url, sql)
             return {"ok": True, "data": data}
+        except NotImplementedError:
+            # Bubble up so FastAPI can map to 501 in the route handler
+            raise
         except Exception as e:
             return {"ok": False, "err": str(e)}
 
