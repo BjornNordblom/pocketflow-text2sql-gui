@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Any
 from pydantic import BaseModel, Field
+from pydantic.config import ConfigDict
 
 
 class QueryRequest(BaseModel):
@@ -21,5 +22,8 @@ class QueryResponse(BaseModel):
     db_schema: Optional[str] = Field(default=None, alias="schema")
     db_url: Optional[str] = None
 
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        validate_by_name=True,   # replaces allow_population_by_field_name
+        ser_json_inf_nan=False,  # optional; keeps JSON strict
+        populate_by_name=True,   # allow population by attribute name as well
+    )
