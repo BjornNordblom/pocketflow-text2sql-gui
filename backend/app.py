@@ -93,7 +93,7 @@ async def query(req: QueryRequest):
             error=None,
             generated_sql=res.get("sql"),
             attempts=res.get("attempts"),
-            schema=res.get("schema"),
+            db_schema=res.get("schema"),
             db_url=db_url,
         )
     else:
@@ -103,6 +103,6 @@ async def query(req: QueryRequest):
             error=res.get("err"),
             generated_sql=res.get("sql"),
             attempts=res.get("attempts"),
-            schema=res.get("schema"),
+            db_schema=res.get("schema"),
             db_url=db_url,
         )

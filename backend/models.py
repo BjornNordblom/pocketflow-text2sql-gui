@@ -18,5 +18,8 @@ class QueryResponse(BaseModel):
     error: Optional[str] = None
     generated_sql: Optional[str] = None
     attempts: Optional[int] = None
-    schema: Optional[str] = None
+    db_schema: Optional[str] = Field(default=None, alias="schema")
     db_url: Optional[str] = None
+
+    class Config:
+        allow_population_by_field_name = True
