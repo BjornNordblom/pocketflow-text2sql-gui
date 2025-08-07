@@ -1,12 +1,23 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from .models import QueryRequest, QueryResponse
 from .flow_nodes import run_text_to_sql
 from .settings import DB_PATH, MAX_DEBUG_ATTEMPTS, OPENROUTER_API_KEY, OPENROUTER_MODEL
 from .db_adapters import get_adapter_for, normalize_to_url
 
-app = FastAPI(title="Text-to-SQL Service", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    if not OPENROUTER_API_KEY:
+        print("[startup] Warning: OPENROUTER_API_KEY is not set. LLM calls will fail unless monkeypatched.")
+    else:
+        print(f"[startup] OpenRouter model: {OPENROUTER_MODEL}")
+    yield
+    # Shutdown (nothing to clean up currently)
+
+app = FastAPI(title="Text-to-SQL Service", version="0.1.0", lifespan=lifespan)
 
 # Enable CORS
 app.add_middleware(
@@ -16,18 +27,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.on_event("startup")
-async def validate_llm_env():
-    # In tests, we allow missing API key because deps.call_llm is monkeypatched.
-    import os
-    if not OPENROUTER_API_KEY:
-        # Only warn instead of raising, so endpoints work in tests/offline.
-        print("[startup] Warning: OPENROUTER_API_KEY is not set. LLM calls will fail unless monkeypatched.")
-    else:
-        # Log selected model
-        print(f"[startup] OpenRouter model: {OPENROUTER_MODEL}")
 
 
 @app.api_route("/health", methods=["GET", "OPTIONS"])
