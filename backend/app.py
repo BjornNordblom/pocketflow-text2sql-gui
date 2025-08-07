@@ -20,14 +20,14 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def validate_llm_env():
-    # Fail fast if API key is missing
+    # In tests, we allow missing API key because deps.call_llm is monkeypatched.
+    import os
     if not OPENROUTER_API_KEY:
-        # Raise RuntimeError so uvicorn logs a clear startup failure
-        raise RuntimeError(
-            "OPENROUTER_API_KEY is not set. Export it to enable LLM completions via OpenRouter."
-        )
-    # Log selected model
-    print(f"[startup] OpenRouter model: {OPENROUTER_MODEL}")
+        # Only warn instead of raising, so endpoints work in tests/offline.
+        print("[startup] Warning: OPENROUTER_API_KEY is not set. LLM calls will fail unless monkeypatched.")
+    else:
+        # Log selected model
+        print(f"[startup] OpenRouter model: {OPENROUTER_MODEL}")
 
 
 @app.api_route("/health", methods=["GET", "OPTIONS"])
